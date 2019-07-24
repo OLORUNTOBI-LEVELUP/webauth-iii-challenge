@@ -1,26 +1,70 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { useEffect, useState } from "react";
+import "./App.css";
+import { BrowserRouter as Router,Route, NavLink } from "react-router-dom";
 
-function App() {
+import Signup from "./components/Signup";
+import Signin from "./components/Sigin";
+import UserList from "./components/UserList";
+
+const App = () => {
+  const [isLogged, setLoggedStatus] = useState(false);
+  const token = localStorage.getItem("jwt");
+
+  const handleLogout = () => {
+    localStorage.removeItem("jwt");
+    setLoggedStatus(false);
+  };
+
+  const handleLogin = token => {
+    localStorage.setItem("jwt", token);
+    setLoggedStatus(true);
+  };
+
+  // When the component first renders
+  // Check if the token exists in local storage (if user previously signed in) and update state
+  useEffect(() => {
+    if (token) {
+      setLoggedStatus(true);
+    }
+  }, [token]);
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <Router>
+    <div className='App'>
+      <nav>
+        {isLogged ? (
+          <div>
+            <NavLink to='/users'>Users</NavLink>
+            <NavLink to='/signin' onClick={() => handleLogout()}>
+              Log out
+            </NavLink>
+          </div>
+        ) : (
+          <div>
+            <NavLink to='/signup'>Register</NavLink>
+            <NavLink to='/signin'>Log in</NavLink>
+          </div>
+        )}
+      </nav>
+      <main>
+        <Route
+          path='/signup'
+          render={props => <Signup {...props} handleLogin={handleLogin} />}
+        />
+        <Route
+          path='/signin'
+          render={props => <Signin {...props} handleLogin={handleLogin} />}
+        />
+        <Route
+          path='/users'
+          render={props => <UserList {...props} token={token} />}
+        />
+      </main>
     </div>
+    </Router>
   );
-}
+};
 
 export default App;
+
+

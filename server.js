@@ -1,10 +1,12 @@
 const express = require('express');
 const server = express();
+const cors = require('cors');
 const port = process.env.PORT || 3000
 const userRoutes = require('./routes/usersroutes')
 const getRoutes = require('./users/GetAllUsers')
 
 server.use(express.json());
+server.use(cors());
 server.use('/auth/api', userRoutes)
 server.use('/', getRoutes);
 
