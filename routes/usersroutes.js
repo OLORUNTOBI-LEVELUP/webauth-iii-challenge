@@ -1,22 +1,56 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const bcrypt = require('bcrypt');
-const db = require('../users/userModel')
+const bcrypt = require("bcrypt");
+const db = require("../users/userModel");
+const jwt = require("jsonwebtoken");
 
+router.post("/register", (req, res) => {
+  let user = req.body;
+  const hash = bcrypt.hashSync(user.password, 10); 
+  user.password = hash;
 
-router.post('/register', (req, res) => {
-    let user = req.body;
-    const hash = bcrypt.hashSync(user.password, 10); // 2 ^ n
-    user.password = hash;
-  
-    db.add(user)
-      .then(saved => {
-        res.status(201).json(saved);
-      })
-      .catch(error => {
-        res.status(500).json(error);
-      });
-  });
-  
+  db.add(user)
+    .then(saved => {
+      res.status(201).json(saved);
+    })
+    .catch(error => {
+      res.status(500).json(error);
+    });
+});
+router.post("/login", (req, res) => {
+  let { username, password } = req.body;
 
-module.exports = router
+  db.findBy({ username })
+    .first()
+    .then(user => {
+      if (user && bcrypt.compareSync(password, user.password)) {
+        const token = generateToken(user);
+
+        res.status(200).json({
+          message: `Welcome ${user.username}!`,
+          token
+        });
+      } else {
+        res.status(401).json({ message: "Invalid Credentials" });
+      }
+    })
+    .catch(error => {
+      res.status(500).json(error);
+    });
+});
+
+function generateToken(user) {
+  const payload = {
+    sub: user.id,
+    username: user.username,
+    department: user.department
+  };
+
+  const options = {
+    expiresIn: "1d"
+  };
+
+  return jwt.sign(payload, "This secret is very long and secure", options);
+}
+
+module.exports = router;
